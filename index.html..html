@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Budget Material Rumah</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);--bg:#eef2f7;--card:#fff;--tx:#14233c;--mut:#5b6b82;--pri:#0b4fb3;--bd:#d5dde9;--ok:#1b8a4b;--bad:#c62828;--chip:#e3eaf5}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1624;--card:#18223a;--tx:#e8eefb;--mut:#9fb0cc;--pri:#4d8dff;--bd:#2c3b5c;--ok:#4cd387;--bad:#ff7a7a;--chip:#22304f}}
+:root[data-theme="dark"]{--bg:#0f1624;--card:#18223a;--tx:#e8eefb;--mut:#9fb0cc;--pri:#4d8dff;--bd:#2c3b5c;--ok:#4cd387;--bad:#ff7a7a;--chip:#22304f}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--pri);z-index:10}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--pri);color:#fff;padding:12px 16px 14px}
+.top small{opacity:.85}.saldo{font-size:30px;font-weight:800;margin:2px 0}
+.bar{height:8px;background:rgba(255,255,255,.3);border-radius:4px;overflow:hidden;margin:6px 0}
+.bar i{display:block;height:100%;background:#ffd84d;width:0}
+.row3{display:flex;justify-content:space-between;font-size:12.5px}
+.w{max-width:600px;margin:0 auto;padding:12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:10px}
+h3{margin:14px 2px 6px;font-size:13px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px}
+.nm{font-weight:700}.mut{color:var(--mut);font-size:12.5px}
+.it{display:grid;grid-template-columns:1fr auto;gap:6px 10px;align-items:center}
+.it.done{opacity:.65}
+input{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:10px;padding:10px;width:100%}
+.pr{display:flex;align-items:center;gap:6px;grid-column:1/-1}
+.pr span{white-space:nowrap}
+.pr input{flex:1;min-width:0}
+.tt{font-weight:800;text-align:right}
+button{font:inherit;border:0;border-radius:10px;padding:10px 14px;font-weight:700;background:var(--pri);color:#fff}
+button.g{background:var(--chip);color:var(--tx)}button.d{background:transparent;color:var(--bad);padding:6px}
+.chips{display:flex;gap:6px;margin-bottom:6px}.chips button{flex:1;padding:8px;background:var(--chip);color:var(--tx);font-size:13px}.chips button.on{background:var(--pri);color:#fff}
+.nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px);z-index:9}
+.nav button{flex:1;background:transparent;color:var(--mut);border-radius:0;padding:10px 4px;font-size:12px}
+.nav button.on{color:var(--pri)}.nav b{display:block;font-size:20px}
+.sum{display:flex;justify-content:space-between;padding:4px 0}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+.toast{position:fixed;left:12px;right:12px;bottom:calc(86px + env(safe-area-inset-bottom,0px));background:#222;color:#fff;border-radius:10px;padding:10px 14px;text-align:center;z-index:20;display:none;max-width:576px;margin:0 auto}
+.rh{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--bd)}.rh:last-child{border:0}
+</style></head><body>
+<div class="top">
+<small>Sisa saldo</small><div class="saldo" id="saldo">Rp 0</div>
+<div class="bar"><i id="bar"></i></div>
+<div class="row3"><span>Budget: <b id="bud">0</b></span><span>Terpakai: <b id="used">0</b></span></div>
+</div>
+<div class="w" id="app"></div>
+<div class="toast" id="toast"></div>
+<div class="nav">
+<button data-t="bahan"><b>🧱</b>Bahan</button>
+<button data-t="riwayat"><b>🧾</b>Riwayat</button>
+<button data-t="dana"><b>💰</b>Dana</button>
+</div>
+<script>
+var KEY="budget-rumah-v1";
+var BASE=[
+["Dinding","Hebel (dinding utama)","pcs",1134],["Dinding","Skat rumah (partisi)","pcs",540],["Dinding","Hebel kitchen set","pcs",14],
+["Pagar","Pagar (1.245 cm)","m",12.45],
+["Bukaan","Pintu","pcs",5],["Bukaan","Jendela","pcs",5],["Bukaan","Pentilasi","pcs",7],
+["Keramik","Keramik lantai 40×40","dus",62],["Keramik","Keramik kitchen set 20×30","pcs",120],
+["Besi","Besi D12","batang",42],["Besi","Besi D10 (kolom praktis)","batang",13],["Besi","Besi Ø8 (cincin)","batang",55],
+["Listrik","Saklar","buah",11],["Listrik","Colokan","buah",10],["Listrik","Mangkok (fitting)","buah",9],["Listrik","Lampu","titik",9],["Listrik","Colokan luar (mesin cuci)","buah",1]
+];
+var S=load();
+var tab="bahan",flt="all",rstArm=false,showAdd=false,editId=null,delArm=null;
+function gi(id){return S.items.filter(function(i){return i.id===id})[0]}
+function load(){
+ try{var r=localStorage.getItem(KEY);if(r){var o=JSON.parse(r);if(o&&o.items)return o}}catch(e){}
+ return{budget:0,exp:[],items:BASE.map(function(b,i){return{id:i,cat:b[0],name:b[1],unit:b[2],qty:b[3],price:0,bought:false}})};
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function rp(n){return"Rp "+Math.round(n).toLocaleString("id-ID")}
+function used(){return S.exp.reduce(function(a,e){return a+e.amt},0)}
+function saldo(){return S.budget-used()}
+function tot(it){return it.qty*it.price}
+function toast(m){var t=document.getElementById("toast");t.textContent=m;t.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(function(){t.style.display="none"},2200)}
+function head(){
+ var s=saldo();var e=document.getElementById("saldo");e.textContent=rp(s);
+ document.getElementById("bud").textContent=rp(S.budget);document.getElementById("used").textContent=rp(used());
+ document.getElementById("bar").style.width=(S.budget>0?Math.min(100,used()/S.budget*100):0)+"%";
+}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function item(it){
+ if(editId===it.id)return editForm(it);
+ return'<div class="card"><div class="it'+(it.bought?" done":"")+'"><div><div class="nm">'+esc(it.name)+'</div><div class="mut">'+
+ (it.bought?'✓ Sudah dibeli':'Jumlah:')+' <b>'+it.qty.toLocaleString("id-ID")+' '+it.unit+'</b></div></div>'+
+ '<div class="tt" id="t'+it.id+'">'+rp(tot(it))+'</div>'+
+ '<div class="pr"><span class="mut">Harga/'+it.unit+'</span><input inputmode="decimal" placeholder="0" value="'+(it.price||"")+'" '+(it.bought?"disabled":"")+' oninput="setP('+it.id+',this.value)"></div>'+
+ '<div style="grid-column:1/-1">'+(it.bought?'<button class="g" onclick="undo('+it.id+')">↩ Batalkan pembelian</button>':'<button onclick="buy('+it.id+')">🛒 Beli sekarang</button>')+(it.bought?'':' <button class="g" onclick="editId='+it.id+';delArm=null;draw()">✎ Ubah</button>')+'</div></div></div>';
+}
+function bahan(){
+ var est=0,rem=0;S.items.forEach(function(i){est+=tot(i);if(!i.bought)rem+=tot(i)});
+ var cukup=saldo()-rem;
+ var h='<div class="card"><div class="sum"><span>Estimasi total semua bahan</span><b>'+rp(est)+'</b></div>'+
+ '<div class="sum"><span>Belum dibeli</span><b id="rem">'+rp(rem)+'</b></div>'+
+ '<div class="sum"><span>Saldo setelah semua dibeli</span><b id="after" class="'+(cukup>=0?"ok":"bad")+'">'+rp(cukup)+'</b></div></div>'+
+ addCard()+'<div class="chips">'+[["all","Semua"],["todo","Belum"],["done","Dibeli"]].map(function(c){return'<button class="'+(flt==c[0]?"on":"")+'" onclick="flt=\''+c[0]+'\';draw()">'+c[1]+'</button>'}).join("")+'</div>';
+ var cat="";
+ S.items.forEach(function(i){
+  if(flt=="todo"&&i.bought)return;if(flt=="done"&&!i.bought)return;
+  if(i.cat!=cat){cat=i.cat;h+='<h3>'+cat+'</h3>'}
+  h+=item(i);
+ });
+ return h;
+}
+function riwayat(){
+ if(!S.exp.length)return'<div class="card mut">Belum ada pengeluaran. Beli bahan atau catat pengeluaran lain di tab Dana.</div>';
+ var h='<div class="card">';
+ S.exp.slice().reverse().forEach(function(e){
+  h+='<div class="rh"><div><div class="nm">'+esc(e.name)+'</div><div class="mut">'+e.date+'</div></div><div><b>−'+rp(e.amt)+'</b> <button class="d" onclick="delE('+e.id+')">✕</button></div></div>';
+ });
+ return h+'</div>';
+}
+function dana(){
+ return'<div class="card"><div class="nm">Total budget / dana</div><div class="mut" style="margin:2px 0 8px">Isi dana yang Anda miliki. Saldo = budget − pengeluaran.</div>'+
+ '<input id="bin" inputmode="numeric" placeholder="contoh: 150000000" value="'+(S.budget||"")+'"><div style="margin-top:8px"><button onclick="setB()">Simpan budget</button></div></div>'+
+ '<div class="card"><div class="nm">Catat pengeluaran lain</div><div class="mut" style="margin:2px 0 8px">Misalnya upah tukang, ongkos kirim, semen, pasir.</div>'+
+ '<input id="en" placeholder="Nama pengeluaran" style="margin-bottom:8px"><input id="ea" inputmode="numeric" placeholder="Jumlah (Rp)"><div style="margin-top:8px"><button onclick="addE()">Tambah pengeluaran</button></div></div>'+
+ '<div class="card"><button class="g" onclick="rst()">'+(rstArm?"Tekan lagi untuk hapus semua data":"Reset semua data")+'</button></div>';
+}
+function draw(){
+ head();
+ document.getElementById("app").innerHTML=tab=="bahan"?bahan():tab=="riwayat"?riwayat():dana();
+ document.querySelectorAll(".nav button").forEach(function(b){b.classList.toggle("on",b.dataset.t==tab)});
+}
+function num(v){var n=parseFloat(String(v).replace(/\./g,"").replace(",","."));return isFinite(n)&&n>0?n:0}
+function setP(id,v){
+ var it=gi(id);it.price=parseFloat(String(v).replace(",","."))||0;save();
+ document.getElementById("t"+id).textContent=rp(tot(it));
+ var rem=0;S.items.forEach(function(i){if(!i.bought)rem+=tot(i)});
+ document.getElementById("rem").textContent=rp(rem);
+ var a=document.getElementById("after");a.textContent=rp(saldo()-rem);a.className=saldo()-rem>=0?"ok":"bad";
+}
+function now(){var d=new Date();return d.toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"})}
+function nid(){return Date.now()+Math.floor(Math.random()*1000)}
+function buy(id){
+ var it=gi(id),t=tot(it);
+ if(!t){toast("Isi harga dulu");return}
+ if(t>saldo()){toast("Saldo tidak cukup. Kurang "+rp(t-saldo()));return}
+ it.bought=true;S.exp.push({id:nid(),name:it.name+" ("+it.qty+" "+it.unit+")",amt:t,date:now(),item:id});
+ save();draw();toast("Dibeli. Saldo terpotong "+rp(t));
+}
+function undo(id){
+ gi(id).bought=false;S.exp=S.exp.filter(function(e){return e.item!==id});save();draw();toast("Pembelian dibatalkan, saldo kembali");
+}
+function delE(id){
+ var e=S.exp.filter(function(x){return x.id===id})[0];
+ if(e&&e.item!==undefined){var q=gi(e.item);if(q)q.bought=false}
+ S.exp=S.exp.filter(function(x){return x.id!==id});save();draw();
+}
+function addCard(){
+ if(!showAdd)return'<button style="width:100%;margin-bottom:10px" onclick="showAdd=true;draw()">＋ Tambah bahan baru</button>';
+ return'<div class="card"><div class="nm">Tambah bahan baru</div><div class="mut" style="margin:2px 0 8px">Contoh: pasir, batu, semen, cat.</div>'+
+ '<input id="ain" list="sug" placeholder="Nama bahan" style="margin-bottom:8px">'+
+ '<datalist id="sug"><option>Semen</option><option>Pasir</option><option>Batu split</option><option>Batu kali</option><option>Kerikil</option><option>Cat</option><option>Paku</option><option>Kawat bendrat</option><option>Triplek</option><option>Baja ringan</option><option>Genteng</option></datalist>'+
+ '<div style="display:flex;gap:8px;margin-bottom:8px"><input id="aq" inputmode="decimal" placeholder="Jumlah"><input id="au" list="uns" placeholder="Satuan"></div>'+
+ '<datalist id="uns"><option>sak</option><option>m³</option><option>pcs</option><option>kg</option><option>batang</option><option>lembar</option><option>kaleng</option><option>dus</option></datalist>'+
+ '<input id="ap" inputmode="decimal" placeholder="Harga per satuan (boleh diisi nanti)">'+
+ '<div style="display:flex;gap:8px;margin-top:8px"><button onclick="addI()">Simpan bahan</button><button class="g" onclick="showAdd=false;draw()">Batal</button></div></div>';
+}
+function addI(){
+ var n=document.getElementById("ain").value.trim(),q=parseFloat(String(document.getElementById("aq").value).replace(",",".")),u=document.getElementById("au").value.trim()||"pcs",p=parseFloat(String(document.getElementById("ap").value).replace(",","."))||0;
+ if(!n||!(q>0)){toast("Isi nama dan jumlah");return}
+ S.items.push({id:nid(),cat:"Tambahan",name:n,unit:u,qty:q,price:p,bought:false,custom:true});
+ showAdd=false;save();draw();toast("Bahan ditambahkan di bagian Tambahan");
+}
+function editForm(it){
+ return'<div class="card" style="border-color:var(--pri)"><div class="nm" style="margin-bottom:8px">✎ Ubah bahan</div>'+
+ '<div class="mut">Nama</div><input id="en2" value="'+esc(it.name)+'" style="margin-bottom:8px">'+
+ '<div style="display:flex;gap:8px;margin-bottom:8px"><div style="flex:1"><div class="mut">Jumlah</div><input id="eq2" inputmode="decimal" value="'+it.qty+'"></div>'+
+ '<div style="flex:1"><div class="mut">Satuan</div><input id="eu2" list="uns2" value="'+esc(it.unit)+'"></div></div>'+
+ '<datalist id="uns2"><option>pcs</option><option>dus</option><option>batang</option><option>sak</option><option>m³</option><option>kubik</option><option>kg</option><option>lembar</option><option>m</option><option>buah</option><option>titik</option><option>kaleng</option></datalist>'+
+ '<div class="mut">Harga per satuan (Rp)</div><input id="ep2" inputmode="decimal" value="'+(it.price||"")+'">'+
+ '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><button onclick="saveI('+it.id+')">Simpan</button><button class="g" onclick="editId=null;delArm=null;draw()">Batal</button>'+
+ '<button class="d" onclick="armDel('+it.id+')">'+(delArm===it.id?'Tekan lagi untuk hapus':'🗑 Hapus bahan')+'</button></div></div>';
+}
+function saveI(id){
+ var it=gi(id),n=document.getElementById("en2").value.trim(),q=parseFloat(String(document.getElementById("eq2").value).replace(",",".")),u=document.getElementById("eu2").value.trim()||"pcs",p=parseFloat(String(document.getElementById("ep2").value).replace(",","."))||0;
+ if(!n||!(q>0)){toast("Isi nama dan jumlah");return}
+ it.name=n;it.qty=q;it.unit=u;it.price=p;editId=null;delArm=null;save();draw();toast("Perubahan disimpan");
+}
+function armDel(id){
+ if(delArm===id){editId=null;delArm=null;delI(id);return}
+ delArm=id;draw();
+}
+function delI(id){S.items=S.items.filter(function(i){return i.id!==id});save();draw();toast("Bahan dihapus")}
+function setB(){S.budget=num(document.getElementById("bin").value);save();draw();toast("Budget disimpan")}
+function addE(){
+ var n=document.getElementById("en").value.trim(),a=num(document.getElementById("ea").value);
+ if(!n||!a){toast("Isi nama dan jumlah");return}
+ if(a>saldo()){toast("Saldo tidak cukup");return}
+ S.exp.push({id:nid(),name:n,amt:a,date:now()});save();draw();toast("Pengeluaran dicatat");
+}
+function rst(){
+ if(!rstArm){rstArm=true;draw();setTimeout(function(){rstArm=false;if(tab=="dana")draw()},4000);return}
+ try{localStorage.removeItem(KEY)}catch(e){}
+ S=load();rstArm=false;draw();toast("Data direset");
+}
+document.querySelectorAll(".nav button").forEach(function(b){b.onclick=function(){tab=b.dataset.t;draw();window.scrollTo(0,0)}});
+draw();
+</script></body></html>
